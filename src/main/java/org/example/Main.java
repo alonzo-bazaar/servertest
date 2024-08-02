@@ -2,24 +2,25 @@ package org.example;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import java.io.IOException;
 import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
         try {
-            Router app = Router.create(8080, 10);
+            Router router = Router.create(8080, 10);
 
-            app.bindEndpoint("/exchange/test", (HttpExchange ex) -> {
+            router.bindEndpoint("/exchange/test", (HttpExchange ex) -> {
                 Response r = new Response(200).bodyAdd("test for exchange");
                 r.writeToExchange(ex);
                 ex.close();
             });
 
 
-            app.bindFunction("/function/test", (Request req) ->
+            router.bindFunction("/function/test", (Request req) ->
                     new Response(200).bodyAdd("test for function"));
 
-            app.bindFunction("/add", (Request req) -> {
+            router.bindFunction("/add", (Request req) -> {
                 List<String> params = req.getRemainingUrlPath();
                 int acc = 0;
                 for(String s : params) {
@@ -32,9 +33,18 @@ public class Main {
                 return new Response(200).bodyAdd(Integer.toString(acc));
             });
 
-            app.bindEndpoint("/debugging/print", new LoggingHttpHandler());
+            router.bindEndpoint("/debugging/print", new LoggingHttpHandler());
+            router.bindFunction("/debugging/reload", (Request req) -> {
+                // can't be fucked implementing a proper reload mechanism rn
+                try {
+                    router.loadConfig();
+                    return new Response(200).bodyAdd("reloaded successfully");
+                } catch (IOException ex) {
+                    return new Response(500).bodyAdd("failed to reload config " + ex.getMessage());
+                }
+            });
 
-            app.startServer();
+            router.startServer();
         } catch(Throwable t) {
             System.err.println("You fucked up");
             System.err.println(t.toString());

@@ -16,8 +16,8 @@ public class Request {
         this.body = body;
         this.remainingPath = remainingUrlPath;
     }
-    String getMethod() { return method; }
-    Headers getHeaders() { return headers; }
-    InputStream getBody() { return body; }
-    List<String> getRemainingUrlPath() { return remainingPath; }
+    public String getMethod() { return method; }
+    public Headers getHeaders() { return headers; }
+    public InputStream getBody() { return body; }
+    public List<String> getRemainingUrlPath() { return remainingPath; }
 }

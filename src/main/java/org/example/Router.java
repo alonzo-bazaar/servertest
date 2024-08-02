@@ -27,14 +27,18 @@ public class Router {
         Router router = new Router();
         router.server = HttpServer.create(new InetSocketAddress(port), backlog);
         router.jellyRuntime.define("router", router);
+        router.loadConfig();
+
+        return router;
+    }
+
+    public void loadConfig() throws IOException {
         try {
             File serverConfig = new File(Objects.requireNonNull(Router.class.getClassLoader().getResource("serverconfig.scm")).getFile());
-            router.jellyRuntime.evalFile(serverConfig);
+            this.jellyRuntime.evalFile(serverConfig);
         } catch (NullPointerException ne) {
             throw new FileNotFoundException("cannot find server config file, server not starting");
         }
-
-        return router;
     }
 
     public void bindEndpoint(String endpoint, HttpHandler handler) {
@@ -79,6 +83,7 @@ public class Router {
 
     // hic sunt jelly
     public void bindJellyFunctionName(String endpoint, String jellyFunction) {
+        System.out.println("binding endpoint " + endpoint + " to function called " + jellyFunction);
         bindFunction(endpoint, (Request r) -> {
             try {
                 return (Response)jellyRuntime.call(jellyFunction, r);
@@ -88,9 +93,10 @@ public class Router {
     }
 
     public void bindJellyFunction(String endpoint, Procedure jellyFunction) {
+        System.out.println("binding endpoint " + endpoint + " to function " + jellyFunction);
         bindFunction(endpoint, (Request r) -> {
             try {
-                return (Response)jellyFunction.call(List.of(r));
+                return (Response)jellyFunction.apply(List.of(r));
             } catch(Throwable t) {
                 return new Response(500).bodyAdd(t.toString());
             }});
